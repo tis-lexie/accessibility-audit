@@ -55,19 +55,16 @@
   }
 }
 
-body {
-  margin: 0;
-}
+
 #button1 {
   width: 100px;
 }
 
-#root {
-  width: 1126px;
+body { margin: 0; }
+
+.root {
   max-width: 100%;
-  margin: 0 auto;
   text-align: center;
-  border-inline: 1px solid var(--border);
   min-height: 100svh;
   display: flex;
   flex-direction: column;
@@ -101,6 +98,14 @@ h2 {
 }
 p {
   margin: 0;
+}
+h3{
+  font-size: 15px;
+  line-height: 100%;
+  letter-spacing: 0px;
+  margin: 2px 0 8px;
+  text-align: left;
+  
 }
 
 code,
