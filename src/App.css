@@ -1,63 +1,35 @@
-/* ---------- Layout ---------- */
-
-/* .hero {
-  padding: 48px 32px 32px;
+.root {
   background: var(--light);
-  border-bottom: 4px solid var(--accent);
-} */
-/* 
-.hero h1 {
-  margin: 0 0 12px;
 }
 
-.lede {
-  max-width: 60ch;
-  color: var(--text-h);
-} */
+.main-container {
+  margin: 10px;
+}
 
-main {
-  padding: 32px;
+.top-bar {
+  max-height: 70px;
   display: flex;
-  flex-direction: column;
-  gap: 24px;
+  justify-content: space-between;
+  align-items: center;
 }
-
-@media (max-width: 700px) {
-  .hero,
-  main {
-    padding-inline: 16px;
-  }
-}
-
-/* ---------- URL form ---------- */
-
-.url-form {
-  margin-top: 24px;
-  max-width: 720px;
-}
-
-.url-form label {
-  display: block;
-  font-weight: 600;
-  color: var(--text-h);
-  margin-bottom: 6px;
-}
-
-.url-row {
+.logo {
+  max-height: 20px;
   display: flex;
-  gap: 8px;
+  justify-content: right;
+  align-items: right;
 }
-
-.url-row input {
-  flex: 1;
-  min-width: 0;
-  font: inherit;
-  padding: 12px 14px;
-  border: 2px solid #8a7f6a; /* 3:1+ against the cream background */
-  border-radius: 8px;
-  background: #fff;
-  color: var(--text-h);
+.top-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 40px;
+  margin-bottom: 100px;
 }
+.catch-phrase {
+  margin-left: 50px;
+  display: flex;
+  justify-content: flex-start;
+  line-height: 1;
 
 .url-row button,
 .viewport-tabs button {
@@ -287,9 +259,83 @@ main {
   color: var(--text-h);
   cursor: pointer;
 }
+.url-container {
+  display: flex;
+  width: 50%;
+  flex-direction: column;
+  align-items: center;
+  margin: 30px, 0px, 0px, 0px;
+  padding: 10px;
+  background: var(--light-accent);
+  border-radius: 20px;
+}
 
+.input-wrapper {
+  display: flex;
+  flex-direction: row;
+  width: 80%;
+  justify-content: center;
+}
+
+.desc-text {
+  width: 300px;
+  color: #000;
+  margin-bottom: 10px;
+}
+
+#url {
+  background-color: #fff;
+  width: 60%;
+  color: #000;
+  
+  margin-bottom: 5px;
+  height: 30px;
+}
+#url, #button1{
+  padding: 8px;
+  border-radius: 10px;
+  
+}
+
+#button1 {
+  background-color: var(--accent);
+  margin-left: 10px;
+  height: 46px;
+  
+}
+
+.output-section{
+  display: flex;
+  justify-content: space-between;
+  margin-left: 10%;
+}
+.problems-text{
+  display: flex;
+  min-width: 30%;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px;
+  border-radius: 20px;
+  background-color: var(--accent);
+  margin-right: 40px;
+}
+
+#problem-output{
+  background-color: transparent;
+  border-color: transparent;
+  resize: none;
+}
+#problem-output:focus {
+  outline: none;
+}
 .image-area {
-  min-height: 200px;
+  width: 100%;
+  max-width: 800px;
+  min-height: 300px;
+  margin: 24px auto;
+  
+  border-radius: 20px;
+  padding: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -314,133 +360,4 @@ main {
 .issues {
   max-height: 85vh;
   overflow-y: auto;
-}
-
-.issue-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.issue-list > li + li {
-  border-top: 1px solid var(--border);
-}
-
-.issue-list summary {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 4px 10px;
-  padding: 12px 4px;
-  cursor: pointer;
-  list-style: none;
-}
-
-.issue-list summary::-webkit-details-marker {
-  display: none;
-}
-
-.badge {
-  align-self: start;
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: var(--sev);
-  color: #fff;
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.issue-title {
-  color: var(--text-h);
-  font-weight: 600;
-  font-size: 16px;
-}
-
-.issue-count {
-  grid-column: 2;
-  font-size: 14px;
-}
-
-.issue-body {
-  padding: 0 4px 16px;
-  font-size: 15px;
-}
-
-.issue-body > p {
-  margin-bottom: 12px;
-}
-
-.node {
-  margin-bottom: 12px;
-}
-
-.node-id {
-  font-weight: 700;
-  color: var(--text-h);
-}
-
-.node pre {
-  margin: 4px 0;
-  padding: 8px 10px;
-  background: var(--code-bg);
-  border-radius: 6px;
-  overflow-x: auto;
-  font-size: 13px;
-}
-
-.node pre code {
-  padding: 0;
-  background: none;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
-
-.node-fix {
-  white-space: pre-line;
-  font-size: 14px;
-}
-
-.issue-body a {
-  color: var(--accent-text);
-  font-weight: 600;
-}
-
-.all-clear {
-  padding: 12px;
-  background: #e8f5e9;
-  color: #1b5e20;
-  border-radius: 6px;
-}
-
-.review-note {
-  margin-top: 12px;
-}
-
-.manual {
-  margin-top: 16px;
-  padding-top: 12px;
-  border-top: 1px solid var(--border);
-  font-size: 15px;
-}
-
-.manual summary {
-  cursor: pointer;
-  font-weight: 600;
-  color: var(--text-h);
-}
-
-.manual ul {
-  padding-left: 20px;
-}
-
-/* ---------- Helpers ---------- */
-
-.visually-hidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  white-space: nowrap;
 }

@@ -29,6 +29,8 @@ function App() {
   const [error, setError] = useState(null);
   const [report, setReport] = useState(null);
   const [viewport, setViewport] = useState(0);
+  const [images, setImages] = useState([]);
+  const [issues, setIssues] = useState("Issues");
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -36,22 +38,40 @@ function App() {
     if (!url) return;
     if (!/^https?:\/\//i.test(url)) url = `https://${url}`; // allow "google.com"
 
+    const scanId = Date.now();
     setLoading(true);
-    setError(null);
+    setImages([]);
     try {
-      const res = await fetch(`${API_URL}/scanner?url=${encodeURIComponent(url)}`, {
-        method: "POST",
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || "The scan could not be completed.");
-      setReport(data);
-      setViewport(0);
-    } catch (err) {
-      setError(
-        err.message === "Failed to fetch"
-          ? "Can't reach the scanner. Is the backend running on port 8000?"
-          : err.message
+      const res = await fetch(
+        `${API_URL}/scanner?url=${encodeURIComponent(input.trim())}`,
+        {
+          method: "POST",
+        },
       );
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.detail || "The scan could not be started.");
+      }
+
+      setIssues(data);
+      console.log(data);
+      setImages([
+        {
+          id: 1,
+          url: `../scan-output/highlighted-desktop.jpg?v=${scanId}`,
+          label: "Desktop",
+          alt: "Desktop screenshot",
+        },
+        {
+          id: 2,
+          url: `../scan-output/highlighted-mobile.jpg?v=${scanId}`,
+          label: "Mobile",
+          alt: "Mobile screenshot",
+        },
+      ]);
+    } catch (error) {
+      setIssues({ error: error.message });
     } finally {
       setLoading(false);
     }
@@ -61,36 +81,72 @@ function App() {
   const counts = result ? tally(result) : null;
 
   return (
-    <>
-      <header className="hero">
-        <h1>Audit That Website.</h1>
-        <p className="lede">
-          Paste any web address to check it for common accessibility problems, see exactly
-          where they are, and ask how to fix them.
-        </p>
+    <div className="root">
+      <div className="main-container">
+        <div className="top-bar">
+          <h3> Accessibility Audit</h3>
 
-        <form className="url-form" onSubmit={handleSubmit}>
-          <label htmlFor="url">Website URL</label>
-          <div className="url-row">
-            <input
-              id="url"
-              type="text"
-              inputMode="url"
-              autoComplete="url"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="https://www.example.com"
-              aria-describedby="url-hint"
-              disabled={loading}
+          <a
+            href="https://github.com/tis-lexie/accessibility-audit"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="logo-link"
+          >
+            <img
+              src="/GitHub_Invertocat_Black.png"
+              alt="View the project on GitHub"
+              className="logo"
             />
-            <button type="submit" disabled={loading || !input.trim()}>
-              {loading ? "Scanning…" : "Scan site"}
-            </button>
+          </a>
+        </div>
+        <div className="top-wrapper">
+          <div className="catch-phrase">
+            <h1>Audit That Website.</h1>
+          </div>
+          <div className="url-container">
+            <h2>Paste Your URL Here</h2>
+            <p className="desc-text">
+              Copy and paste any website into the text-box below to see if it is
+              accessible.
+            </p>
+            <div className="input-wrapper">
+              <input
+                id="url"
+                type="url"
+                value={input}
+                onChange={(event) => setInput(event.target.value)}
+                placeholder="Enter Website URL here, ex: https://www.google.com"
+              />
+              <button
+                onClick={handleClick}
+                id="button1"
+                type="button"
+                disabled={loading}
+              >
+                {loading ? "Scanning..." : "Submit URL"}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="output-section">
+          <div className="text-image-wrapper">
+            <h1>Your Output Here.</h1>
+            <ScreenshotViewer images={images} />
+          </div>
+          <div className="problems-text">
+            <h2>List of Problems</h2>
+            <label htmlFor="problem-output"></label>
+            <textarea
+              readOnly
+              id="problem-output"
+              value={typeof issues === "string" ? issues : JSON.stringify(issues, null, 2)}
+            />
           </div>
           <p id="url-hint" className="hint">
             We check the desktop and mobile layouts. Scans take about 20–60 seconds.
           </p>
-        </form>
+        </div>
 
         <div aria-live="polite" className="status-area">
           {loading && (
@@ -104,63 +160,8 @@ function App() {
             </p>
           )}
         </div>
-      </header>
-
-      <main>
-        {!report && !loading && (
-          <p className="empty">Your results will appear here after a scan.</p>
-        )}
-
-        {report && result && (
-          <>
-            <section className="summary" aria-labelledby="summary-heading">
-              <div className="summary-head">
-                <h2 id="summary-heading">
-                  Results for <span className="scanned-url">{report.url}</span>
-                </h2>
-                <div className="viewport-tabs" role="group" aria-label="Choose layout">
-                  {report.results.map((r, i) => (
-                    <button
-                      key={r.viewport}
-                      type="button"
-                      aria-pressed={i === viewport}
-                      onClick={() => setViewport(i)}
-                    >
-                      {r.viewport === "desktop" ? "Desktop" : "Mobile"}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <ul className="stats">
-                <li className="stat score">
-                  <span className="stat-num">{scoreFrom(counts)}</span>
-                  <span className="stat-label">Automated score</span>
-                </li>
-                {SEVERITIES.map((s) => (
-                  <li key={s} className={`stat sev-${s}`}>
-                    <span className="stat-num">{counts[s]}</span>
-                    <span className="stat-label">{s}</span>
-                  </li>
-                ))}
-              </ul>
-
-              <p className="disclaimer">
-                {report.disclaimer} Automated tools find roughly a third of real-world issues,
-                so a human check is still needed.
-              </p>
-            </section>
-
-            <div className="results-grid">
-              <ScreenshotViewer result={result} />
-              <IssueList result={result} manualChecks={report.manual_checks_required} />
-            </div>
-
-            <ChatPanel report={report} />
-          </>
-        )}
-      </main>
-    </>
+      </div>
+    </div>
   );
 }
 

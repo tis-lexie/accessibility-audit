@@ -91,7 +91,7 @@ export default function ChatPanel({ report }) {
         }}
       >
         <label htmlFor="chat-box" className="visually-hidden">
-          Your question
+          
         </label>
         <input
           id="chat-box"
