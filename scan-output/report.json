@@ -1,0 +1,84 @@
+{
+  "url": "https://webcourses.ucf.edu",
+  "scanned_at": "2026-10-10T03:30:41.406968+00:00",
+  "standard": "WCAG 2.2 A/AA (automated rules only)",
+  "disclaimer": "Automated results only. Not a legal determination or certification of ADA compliance.",
+  "results": [
+    {
+      "viewport": "desktop",
+      "final_url": "https://login.microsoftonline.com/bb932f15-ef38-42ba-91fc-f3c59d5dd1f1/saml2?SAMLRequest=fVLLTuMwFN3zFZH3zstpaay2UqFCVOJRtZ1ZzAY59jVYSuzia%2FP4e9IUBEgMklfX53HPsacounbPFzE82A08RsCQvHStRT5czEj0ljuBBrkVHSAPkm8X11e8THO%2B9y446VryhfI7QyCCD8ZZkqyWM3InASbluFL0VLGGVrUCOmFMUVWPgOWyZo2uSPIXPPacGekleiJihJXFIGzoR3k5pkXen13OOMt5Nf5HkmWfw1gRBtZDCHvkWda6e2PTzkjv0OngbGsspNJ1WdPUrNTFiIJmE1qVjaB1oSXVTI5qNVKq0EV2SFeSZPER4dxZjB34LfgnI%2BHP5urT6hka6aJHwDRKnYKKR%2FdBhCTr9%2BLOjFXG3v%2FeWXMEIb%2Fc7dZ0fbvdkfn0oMOHJvz8YPqz57DyNPsKnh4f%2FKa3WS3XrjXyNblwvhPh%2F1sUaTFMjKJ6gPJocQ%2FSaAOqb6Rt3fO5BxFgRoKPQLL50fT7x5qfvAE%3D&SigAlg=http%3A%2F%2Fwww.w3.org%2F2001%2F04%2Fxmldsig-more%23rsa-sha256&Signature=QCrVoBn%2BFkePgLWnp%2FlpMbYWYkNdHz4Gttac9xDzq%2BA82YG1Nn0riqr%2FUgEickjXA7qSzWM7mUJ96p5o9xq49zNAhV2GVHHZk64dVcraEs1cvVS9ZguNmtvBbMFp8DrW%2BYq1Q0Svuze6U7CIFRcv%2FiZIVLfue1p59CJAh6%2FZFNr9faSfov2nQ3SkuynnLGit0zgxdegg49VymZZJRU0rHljKKZJeNFB0yu%2B5zfeo8S3payDfQsXU1XyKgFDhmxpY82rQ7ewG1M1BDEgkJ968%2BYgV3Hk4peh2n8dQqxEqQTUwPIYWlzJduWgmouymyarkklE6qmZPgkDo1fVyEShbPg%3D%3D&sso_reload=true",
+      "http_status": 200,
+      "screenshots": {
+        "clean": "clean-desktop.jpg",
+        "highlighted": "highlighted-desktop.jpg",
+        "width": 1280,
+        "height": 800,
+        "truncated": false
+      },
+      "violations": [],
+      "needs_review": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+          "help": "Elements must meet minimum color contrast ratio thresholds",
+          "help_url": "https://dequeuniversity.com/rules/axe/4.12/color-contrast?application=axeAPI",
+          "tags": [
+            "cat.color",
+            "wcag2aa",
+            "wcag143",
+            "TTv5",
+            "TT13.c",
+            "EN-301-549",
+            "EN-9.1.4.3",
+            "ACT",
+            "RGAAv4",
+            "RGAA-3.2.1"
+          ],
+          "nodes": [
+            {
+              "target": [
+                "#ftrTerms"
+              ],
+              "html": "<a id=\"ftrTerms\" data-bind=\"\n            text: t...\" href=\"http://policies.ucf....\" class=\"footer-content ext-f...\">",
+              "fix": "Fix any of the following:\n  Element's background color could not be determined due to a background image"
+            },
+            {
+              "target": [
+                "#ftrPrivacy"
+              ],
+              "html": "<a id=\"ftrPrivacy\" data-bind=\"\n            text: p...\" href=\"https://www.ucf.edu/...\" class=\"footer-content ext-f...\">",
+              "fix": "Fix any of the following:\n  Element's background color could not be determined due to a background image"
+            }
+          ]
+        }
+      ],
+      "passes_count": 28
+    },
+    {
+      "viewport": "mobile",
+      "final_url": "https://login.microsoftonline.com/bb932f15-ef38-42ba-91fc-f3c59d5dd1f1/saml2?SAMLRequest=fVJNT%2BMwEL3vr4h8dxInTUustlJphbYSsFVbOHBBjj2mlhK767Fh999vmoJgJUDyafw%2B5j17iqJrj3wRw8Fu4XcEDMmfrrXIh4sZid5yJ9Agt6ID5EHy3eLmmhdpzo%2FeBSddSz5QvmcIRPDBOEuS9WpGHgEmlWyKho4nF2M6qgtGBZOMNjlTJYwnSlSMJPfgsefMSC%2FRExEjrC0GYUM%2FyosxZXl%2F9nnJy5yP6geSrPocxoowsA4hHJFnWeuejE07I71Dp4OzrbGQStdlTVOXhWYVBV1e0FHRCFozLakuZVWrSimmWXZKV5Bk8RZh6SzGDvwO%2FLORcLe9frd6gUa66BEwjVKnoOLZfRAhyea1uEtjlbFP33fWnEHIf%2B73G7r5tduT%2BfSkw4cm%2FPxk%2BrnnsPI0%2Bwienh%2F8trdZrzauNfJvcuV8J8LXW7CUDROjqB6gPFo8gjTagOobaVv3svQgAsxI8BFINj%2Bb%2Fv%2Bx5j%2F%2BAQ%3D%3D&SigAlg=http%3A%2F%2Fwww.w3.org%2F2001%2F04%2Fxmldsig-more%23rsa-sha256&Signature=3tgzgIHv5Kk0dJ1FrcSy%2FQhKyZL9hyAt05MfXDcLe13zZBr6pkAGRgegOsnTlqElUraP4WXrNA4fdRhAUB5Dw%2BzNZdGMDcjturdRi5xdxcadkA36yud1OXZjPwNJWi6fMGusmBTL0MhCfly%2BZqwebiuPsVyU6LntTOpbVld2AjJxk3gr6XIeOIFphv%2BOS7mpn2DsourLO53hpgHu3jdmHtqq8hSCKUOVZW%2B34eYRNfmKpnv3Ct1xOI4QuNNN4npc1Z5gKvNeJh%2B1xVOcTYRK87Lxf97TuwVHlSNgo7JCLjZgkks1%2BOWk%2FMdJm6rJI2YMIfmy3nR0lR8DpqxhvHdc3g%3D%3D&sso_reload=true",
+      "http_status": 200,
+      "screenshots": {
+        "clean": "clean-mobile.jpg",
+        "highlighted": "highlighted-mobile.jpg",
+        "width": 375,
+        "height": 812,
+        "truncated": false
+      },
+      "violations": [],
+      "needs_review": [],
+      "passes_count": 27
+    }
+  ],
+  "manual_checks_required": [
+    "Alt text is meaningful, not just present",
+    "Keyboard-only navigation works; no keyboard traps; focus order is logical",
+    "Visible focus indicator on all interactive elements",
+    "Captions/transcripts are accurate for audio and video",
+    "Link and button text makes sense out of context",
+    "Complex widgets (menus, modals, tabs) work with a screen reader",
+    "Content reflows at 400% zoom without loss of information",
+    "Error messages in forms are clear and programmatically associated"
+  ]
+}
