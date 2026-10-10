@@ -59,7 +59,7 @@
 #url {
   background-color: #fff;
   width: 60%;
-  
+  color: #000;
   
   margin-bottom: 5px;
   height: 30px;
@@ -76,13 +76,39 @@
   height: 46px;
   
 }
+
+.output-section{
+  display: flex;
+  justify-content: space-between;
+  margin-left: 10%;
+}
+.problems-text{
+  display: flex;
+  min-width: 30%;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px;
+  border-radius: 20px;
+  background-color: var(--accent);
+  margin-right: 40px;
+}
+
+#problem-output{
+  background-color: transparent;
+  border-color: transparent;
+  resize: none;
+}
+#problem-output:focus {
+  outline: none;
+}
 .image-area {
   width: 100%;
   max-width: 800px;
   min-height: 300px;
   margin: 24px auto;
-  border: 2px dashed #888;
-  border-radius: 8px;
+  
+  border-radius: 20px;
+  padding: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
