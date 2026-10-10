@@ -24,8 +24,21 @@ from axe_playwright_python.sync_playwright import Axe
 from playwright.sync_api import sync_playwright
 
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+
+origins = [
+    "http://localhost:5173",
+    "http://localhost:3000",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Rule sets to run: WCAG 2.0/2.1/2.2 levels A and AA.
 WCAG_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"]
@@ -299,7 +312,6 @@ def main() -> int:
             "of ADA compliance."
         ),
         "results": [],
-        "manual_checks_required": MANUAL_CHECKS,
     }
 
     with sync_playwright() as p:
