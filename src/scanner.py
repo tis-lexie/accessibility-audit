@@ -23,6 +23,10 @@ from urllib.parse import urlparse
 from axe_playwright_python.sync_playwright import Axe
 from playwright.sync_api import sync_playwright
 
+from fastapi import FastAPI, HTTPException
+
+app = FastAPI()
+
 # Rule sets to run: WCAG 2.0/2.1/2.2 levels A and AA.
 WCAG_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"]
 
@@ -30,19 +34,6 @@ VIEWPORTS = {
     "desktop": {"width": 1280, "height": 800},
     "mobile": {"width": 375, "height": 812},
 }
-
-# Things automation cannot verify. Surface these in every report.
-MANUAL_CHECKS = [
-    "Alt text is meaningful, not just present",
-    "Keyboard-only navigation works; no keyboard traps; focus order is logical",
-    "Visible focus indicator on all interactive elements",
-    "Captions/transcripts are accurate for audio and video",
-    "Link and button text makes sense out of context",
-    "Complex widgets (menus, modals, tabs) work with a screen reader",
-    "Content reflows at 400% zoom without loss of information",
-    "Error messages in forms are clear and programmatically associated",
-]
-
 
 def assert_public_url(url: str) -> None:
     """Basic SSRF guard: only http(s), and reject private/internal addresses.
@@ -249,6 +240,39 @@ def scan_page(
     finally:
         context.close()
 
+@app.post("/scanner")
+def scan(url: str) -> dict:
+    """Scan a URL and return the report directly as an API response."""
+    try:
+        assert_public_url(url)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    report = {
+        "url": url,
+        "scanned_at": datetime.now(timezone.utc).isoformat(),
+        "standard": "WCAG 2.2 A/AA (automated rules only)",
+        "disclaimer": (
+            "Automated results only. Not a legal determination or certification "
+            "of ADA compliance."
+        ),
+        "results": [],
+    }
+
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        try:
+            for name in VIEWPORTS:
+                print(f"Scanning {url} ({name})...")
+                report["results"].append(
+                    scan_page(
+                        browser, url, name, "scan-output/", True
+                    )
+                )
+        finally:
+            browser.close()
+
+    return report
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Scan a URL for WCAG issues.")
