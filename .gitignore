@@ -1,1 +1,2 @@
 Add-Content .gitignore "scan-output/"
+/scan-output
