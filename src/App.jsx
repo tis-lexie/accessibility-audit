@@ -1,27 +1,25 @@
 import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
 import './App.css'
 
 function App() {
   const [count, setCount] = useState(0)
 
   return (
-    <>
-      <section id="center">
-        
-      </section>
+    <div id="root">
+     <div className="main-container">
+      <div className="top-bar">
+        <div className="catch-phrase">
+          <h1>Audit That Website.</h1>
+        </div>
+        <div className="url-container">
+          <h2>Paste Your URL Here</h2>
+          <p>Copy and paste any website into the text-box below to see if it is accessible.</p>
+          <input id="url" type="url" placeholder="Enter Website URL here, ex: https://www.google.com"/>
+        </div>
 
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-       
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+      </div>
+     </div>
+    </div>
   )
 }
 
