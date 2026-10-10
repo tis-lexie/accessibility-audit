@@ -24,7 +24,29 @@
   clip: rect(0 0 0 0);
   white-space: nowrap;
 }
+.image-area {
+  width: 100%;
+  max-width: 800px;
+  min-height: 300px;
+  margin: 24px auto;
+  border: 2px dashed #888;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
+.image-area img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.image-tabs {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
 .hero {
   position: relative;
 
