@@ -55,23 +55,26 @@ function App() {
           </a>
 
         </div>
-
-        <div className="catch-phrase">
-          <h1>Audit That Website.</h1>
-        </div>
-        <div className="url-container">
-          <h2>Paste Your URL Here</h2>
-          <p>Copy and paste any website into the text-box below to see if it is accessible.</p>
-          <input
-            id="url"
-            type="url"
-            value={input}
-            onChange={(event) => setInput(event.target.value)}
-            placeholder="Enter Website URL here, ex: https://www.google.com"
-          />
-          <button onClick={handleClick} id="button1" type="button" disabled={loading}>
-            {loading ? "Scanning..." : "Submit URL"}
-          </button>
+        <div className="top-wrapper">
+          <div className="catch-phrase">
+            <h1>Audit That Website.</h1>
+          </div>
+          <div className="url-container">
+            <h2>Paste Your URL Here</h2>
+            <p className="desc-text">Copy and paste any website into the text-box below to see if it is accessible.</p>
+            <div className="input-wrapper">
+            <input
+              id="url"
+              type="url"
+              value={input}
+              onChange={(event) => setInput(event.target.value)}
+              placeholder="Enter Website URL here, ex: https://www.google.com"
+            />
+            <button onClick={handleClick} id="button1" type="button" disabled={loading}>
+              {loading ? "Scanning..." : "Submit URL"}
+            </button>
+            </div>
+          </div>
         </div>
 
         <div className="output-section">

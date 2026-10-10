@@ -1,28 +1,81 @@
-.root{
+.root {
   background: var(--light);
-
 }
-.main-container{
+
+.main-container {
   margin: 10px;
-
 }
 
-.top-bar{
+.top-bar {
   max-height: 70px;
   display: flex;
-  justify-content: space-between; 
-  align-items: center;           
-
+  justify-content: space-between;
+  align-items: center;
 }
-.logo{
+.logo {
   max-height: 20px;
   display: flex;
   justify-content: right;
   align-items: right;
-
+}
+.top-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 40px;
+  margin-bottom: 100px;
+}
+.catch-phrase {
+  margin-left: 50px;
+  display: flex;
+  justify-content: flex-start;
+  line-height: 1;
 
 }
+.url-container {
+  display: flex;
+  width: 50%;
+  flex-direction: column;
+  align-items: center;
+  margin: 30px, 0px, 0px, 0px;
+  padding: 10px;
+  background: var(--light-accent);
+  border-radius: 20px;
+}
 
+.input-wrapper {
+  display: flex;
+  flex-direction: row;
+  width: 80%;
+  justify-content: center;
+}
+
+.desc-text {
+  width: 300px;
+  color: #000;
+  margin-bottom: 10px;
+}
+
+#url {
+  background-color: #fff;
+  width: 60%;
+  
+  
+  margin-bottom: 5px;
+  height: 30px;
+}
+#url, #button1{
+  padding: 8px;
+  border-radius: 10px;
+  
+}
+
+#button1 {
+  background-color: var(--accent);
+  margin-left: 10px;
+  height: 46px;
+  
+}
 .image-area {
   width: 100%;
   max-width: 800px;
@@ -46,4 +99,3 @@
   gap: 8px;
   justify-content: center;
 }
-
