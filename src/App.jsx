@@ -7,8 +7,8 @@ const API_URL = "http://127.0.0.1:8000";
 function App() {
   const [loading, setLoading] = useState(false);
   const [input, setInput] = useState("");
-  const [result, setResult] = useState("");
   const [images, setImages] = useState([]);
+  const [issues, setIssues] = useState("Issues");
 
   async function handleClick() {
     if (!input.trim()) return; // catches empty strings
@@ -29,7 +29,7 @@ function App() {
         throw new Error(data.detail || "The scan could not be started.");
       }
 
-      setResult(data);
+      setIssues(data);
       console.log(data);
       setImages([
         {
@@ -46,7 +46,7 @@ function App() {
         },
       ]);
     } catch (error) {
-      setResult({ error: error.message });
+      setIssues({ error: error.message });
     } finally {
       setLoading(false);
     }
@@ -109,7 +109,11 @@ function App() {
           <div className="problems-text">
             <h2>List of Problems</h2>
             <label htmlFor="problem-output"></label>
-            <textarea readOnly id="problem-output" defaultValue="" />
+            <textarea
+              readOnly
+              id="problem-output"
+              value={typeof issues === "string" ? issues : JSON.stringify(issues, null, 2)}
+            />
           </div>
         </div>
       </div>
