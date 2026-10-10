@@ -17,6 +17,7 @@ import os
 import shutil
 import socket
 import sys
+import uuid
 from datetime import datetime, timezone
 from urllib.parse import urlparse
 
@@ -25,11 +26,16 @@ from playwright.sync_api import sync_playwright
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from playwright.sync_api import Error as PlaywrightError
+
+from chat import router as chat_router
 
 app = FastAPI()
 
 origins = [
     "http://localhost:5173",
+    "http://127.0.0.1:5173",
     "http://localhost:3000",
 ]
 
@@ -47,6 +53,22 @@ VIEWPORTS = {
     "desktop": {"width": 1280, "height": 800},
     "mobile": {"width": 375, "height": 812},
 }
+
+# Each scan gets its own folder in here, served to the frontend at /scan-output/...
+OUTPUT_DIR = "scan-output"
+os.makedirs(OUTPUT_DIR, exist_ok=True)
+
+# Things automation cannot verify. Surface these in every report.
+MANUAL_CHECKS = [
+    "Alt text is meaningful, not just present",
+    "Keyboard-only navigation works; no keyboard traps; focus order is logical",
+    "Visible focus indicator on all interactive elements",
+    "Captions/transcripts are accurate for audio and video",
+    "Link and button text makes sense out of context",
+    "Complex widgets (menus, modals, tabs) work with a screen reader",
+    "Content reflows at 400% zoom without loss of information",
+    "Error messages in forms are clear and programmatically associated",
+]
 
 def assert_public_url(url: str) -> None:
     """Basic SSRF guard: only http(s), and reject private/internal addresses.
@@ -261,7 +283,14 @@ def scan(url: str) -> dict:
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
+    # A new folder per scan, so screenshots never overwrite each other
+    # and the browser never shows a cached image from an older scan.
+    scan_id = uuid.uuid4().hex[:12]
+    out_dir = os.path.join(OUTPUT_DIR, scan_id)
+    os.makedirs(out_dir, exist_ok=True)
+
     report = {
+        "scan_id": scan_id,
         "url": url,
         "scanned_at": datetime.now(timezone.utc).isoformat(),
         "standard": "WCAG 2.2 A/AA (automated rules only)",
@@ -270,22 +299,37 @@ def scan(url: str) -> dict:
             "of ADA compliance."
         ),
         "results": [],
+        "manual_checks_required": MANUAL_CHECKS,
     }
 
-    with sync_playwright() as p:
-        browser = p.chromium.launch()
-        try:
-            for name in VIEWPORTS:
-                print(f"Scanning {url} ({name})...")
-                report["results"].append(
-                    scan_page(
-                        browser, url, name, "scan-output/", True
-                    )
-                )
-        finally:
-            browser.close()
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch()
+            try:
+                for name in VIEWPORTS:
+                    print(f"Scanning {url} ({name})...")
+                    report["results"].append(scan_page(browser, url, name, out_dir, True))
+            finally:
+                browser.close()
+    except ValueError as exc:  # e.g. the site redirected to a private address
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except PlaywrightError as exc:  # timeouts, site down, etc.
+        raise HTTPException(status_code=502, detail=f"Could not load the page: {exc}") from exc
+
+    # Turn screenshot filenames into URLs the frontend can load.
+    for r in report["results"]:
+        shots = r.get("screenshots")
+        if shots:
+            for key in ("clean", "highlighted"):
+                shots[key] = f"/{OUTPUT_DIR}/{scan_id}/{shots[key]}"
 
     return report
+
+
+app.include_router(chat_router)  # POST /api/chat
+
+# Serves the screenshots. Mounted after the routes so it doesn't shadow them.
+app.mount(f"/{OUTPUT_DIR}", StaticFiles(directory=OUTPUT_DIR), name="scan-output")
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Scan a URL for WCAG issues.")
@@ -312,6 +356,7 @@ def main() -> int:
             "of ADA compliance."
         ),
         "results": [],
+        "manual_checks_required": MANUAL_CHECKS,
     }
 
     with sync_playwright() as p:
