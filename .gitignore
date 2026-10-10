@@ -1,3 +1,5 @@
+Add-Content .gitignore "scan-output/"
+/scan-output
 # Logs
 logs
 *.log
