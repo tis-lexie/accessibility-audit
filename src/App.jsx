@@ -27,8 +27,8 @@ function App() {
       setResult(data);
       console.log(data);
       setImages([
-      { id: 1, url: "/desktop.jpg", label: "Desktop", alt: "Desktop screenshot" },
-      { id: 2, url: "/mobile.jpg", label: "Mobile", alt: "Mobile screenshot" },
+      { id: 1, url: "../scan-output/highlighted-desktop.jpg", label: "Desktop", alt: "Desktop screenshot" },
+      { id: 2, url: "../scan-output/highlighted-mobile.jpg", label: "Mobile", alt: "Mobile screenshot" },
       ]);
     } catch (error) {
       setResult({ error: error.message });
