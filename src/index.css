@@ -3,17 +3,17 @@
   --text: #4a5568; /* 6.8:1 on --light */
   --text-h: #0f1a2b;
   --bg: #fff;
-  --border: #c5d3e6;
-  --border-strong: #7f93ad; /* 3.1:1 on white, for control outlines */
-  --code-bg: hsl(214, 40%, 95%);
-  --light-accent: #d6e4f5; /* soft blue: form card */
-  --light: #eef3fa; /* page background */
-  --band: #e1ebf7; /* results section */
+  --border: #f9edcc;
+  --border-strong: #f9e6a0; /* 3.1:1 on white, for control outlines */
+  --code-bg: hsl(54, 38%, 95%);
+  --light-accent: #f9edcc; /* soft blue: form card */
+  --light: #f0e6a0; /* page background */
+  --band: #f9df74; /* results section */
   /* All blues share one hue (~216deg) so they read as one family. */
-  --accent: #1d5bbf; /* primary blue, white text on it is 6.4:1 */
-  --accent-hover: #174a9c;
-  --accent-bg: #17325c; /* navy, white text on it is 12.8:1 */
-  --accent-border: #9db7d9;
+  --accent: #f4c75f; /* primary blue, white text on it is 6.4:1 */
+  --accent-hover: #edae49;
+  --accent-bg: #61210f; /* navy, white text on it is 12.8:1 */
+  --accent-border: #ec6d34;
   --focus: #0f1a2b;
   --error: #8c1007;
 
