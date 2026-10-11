@@ -135,7 +135,7 @@ function App() {
           className="logo-link"
         >
           <img
-            src="/GitHub_Invertocat_Black.png"
+            src="/github_white.svg"
             alt="View the project on GitHub (opens in a new tab)"
             className="logo"
           />
