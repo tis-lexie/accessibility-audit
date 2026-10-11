@@ -37,7 +37,7 @@
 }
 
 .logo {
-  height: 24px;
+  height: 40px;
   width: auto;
   display: block;
 }
@@ -117,6 +117,11 @@
   color: var(--text-h);
   background: #fff;
   border: 2px solid var(--accent-bg);
+  /* Stop Safari/iOS adding its own inner shadow and styling. */
+  appearance: none;
+  -webkit-appearance: none;
+  box-shadow: none;
+  background-image: none;
 }
 
 #url[aria-invalid="true"] {
