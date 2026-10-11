@@ -1,4 +1,4 @@
-\*This project is powered by FastAPI and React Vite
+**This project is powered by FastAPI and React Vite**
 
 # Accessibility Checker
 
