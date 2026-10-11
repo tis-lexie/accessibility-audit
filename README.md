@@ -1,16 +1,47 @@
-# React + Vite
+\*This project is powered by FastAPI and React Vite
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+# Accessibility Checker
 
-Currently, two official plugins are available:
+This website allows you to audit any public website to ensure that it meets most accessibility standards
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+# Getting Started with Axe-core and Playwright
+Run `pip install playwright axe-playwright-python`
+`playwright install chromium`
 
-## React Compiler
+# Installing React and Vite
+Run `npm install`
+then `npm run dev` to start the front end
+# installing Fast API
+ `pip install fastapi "uvicorn[standard]"`
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
 
-## Expanding the Oxlint configuration
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+
+# Installing the chat dependency
+`pip install huggingface_hub`
+
+# Running the back end
+From the project folder (with your virtual environment active):
+
+```
+cd src
+uvicorn scanner:app --reload --port 8000
+```
+
+Run this in a second terminal while `npm run dev` is running, then open http://localhost:5173.
+The API docs are at http://127.0.0.1:8000/docs. Opening http://127.0.0.1:8000/ shows `{"detail":"Not Found"}`, which is expected.
+
+# Setting up the chat (optional)
+The "Ask about this scan" chat needs a Hugging Face token. Scanning works without one.
+
+1. Create a fine-grained token at https://huggingface.co/settings/tokens with **"Make calls to Inference Providers"** checked.
+2. Put it in a `.env` file in the project folder (already ignored by git, never commit it):
+   ```
+   HF_TOKEN=hf_your_token_here
+   ```
+3. Start the back end with the token loaded:
+   ```
+   set -a && source .env && set +a && cd src && uvicorn scanner:app --reload --port 8000
+   ```
+
+Each teammate should use their own token.

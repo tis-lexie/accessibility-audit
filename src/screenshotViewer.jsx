@@ -1,51 +1,68 @@
 import { useState } from "react";
 import { API_URL } from "./config";
 
-// Shows the screenshot for one viewport, with or without the numbered highlight boxes.
-function ScreenshotViewer({ result }) {
-  const [showHighlights, setShowHighlights] = useState(true);
-  const shots = result.screenshots;
+function ScreenshotViewer({ result, siteName, cacheKey }) {
+  const [mode, setMode] = useState("highlighted");
+  const shots = result?.screenshots;
 
   if (!shots) {
     return (
-      <div className="panel image-area">
-        <p>No screenshot was captured for this scan.</p>
-      </div>
+      <>
+        <div className="column-header">
+          <h3>Screenshot</h3>
+        </div>
+        <div className="image-area empty">
+          <p className="empty-state">Your scan screenshots will appear here.</p>
+        </div>
+      </>
     );
   }
 
-  const issueCount = result.violations.reduce((n, v) => n + v.nodes.length, 0);
-  const src = API_URL + (showHighlights ? shots.highlighted : shots.clean);
+  const elementCount = result.issues.reduce(
+    (total, issue) => total + issue.affected_elements.length,
+    0,
+  );
+  const alt =
+    mode === "highlighted"
+      ? `Full-page screenshot of ${siteName} at ${result.viewport} width, with ${elementCount} problem ${elementCount === 1 ? "element" : "elements"} outlined and numbered.`
+      : `Full-page screenshot of ${siteName} at ${result.viewport} width.`;
 
   return (
-    <section className="panel" aria-labelledby="shot-heading">
-      <div className="panel-head">
-        <h2 id="shot-heading">Where the problems are</h2>
-        <label className="toggle">
-          <input
-            type="checkbox"
-            checked={showHighlights}
-            onChange={(e) => setShowHighlights(e.target.checked)}
-          />
-          Show highlights
-        </label>
+    <>
+      <div className="column-header">
+        <h3>Screenshot</h3>
+        <div className="toggle-group" role="group" aria-label="Screenshot style">
+        {[
+          ["highlighted", "Highlighted"],
+          ["clean", "Clean"],
+        ].map(([value, label]) => (
+          <button
+            key={value}
+            type="button"
+            className="toggle"
+            aria-pressed={mode === value}
+            onClick={() => setMode(value)}
+          >
+            {label}
+          </button>
+        ))}
+        </div>
       </div>
-
-      <div className="image-scroll" tabIndex={0} aria-label="Page screenshot, scrollable">
-        <img
-          src={src}
-          alt={
-            showHighlights
-              ? `Screenshot of ${result.final_url} with numbered boxes around ${issueCount} problem areas. The numbers match the list of issues.`
-              : `Screenshot of ${result.final_url}`
-          }
-        />
+      {/* Focusable so keyboard users can scroll a tall screenshot. */}
+      <div
+        className="image-area"
+        tabIndex={0}
+        role="region"
+        aria-label={`${result.viewport} screenshot, scrollable`}
+      >
+        <img src={`${API_URL}${shots[mode]}?v=${cacheKey}`} alt={alt} />
       </div>
-
       {shots.truncated && (
-        <p className="hint">This page is very long, so only the top part is shown.</p>
+        <p className="note">
+          This page is very long, so the screenshot only shows the top part.
+        </p>
       )}
-    </section>
+    </>
   );
 }
 

@@ -14,10 +14,10 @@ import argparse
 import ipaddress
 import json
 import os
+import re
 import shutil
 import socket
 import sys
-import uuid
 from datetime import datetime, timezone
 from urllib.parse import urlparse
 
@@ -58,17 +58,17 @@ VIEWPORTS = {
 OUTPUT_DIR = "scan-output"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-# Things automation cannot verify. Surface these in every report.
-MANUAL_CHECKS = [
-    "Alt text is meaningful, not just present",
-    "Keyboard-only navigation works; no keyboard traps; focus order is logical",
-    "Visible focus indicator on all interactive elements",
-    "Captions/transcripts are accurate for audio and video",
-    "Link and button text makes sense out of context",
-    "Complex widgets (menus, modals, tabs) work with a screen reader",
-    "Content reflows at 400% zoom without loss of information",
-    "Error messages in forms are clear and programmatically associated",
-]
+def normalize_url(url: str) -> str:
+    """Accept bare input like "example.com" or "www.example.com/page".
+
+    Adds https:// when no scheme is given. "www." is left to the site: most
+    domains redirect between the bare and www forms on their own.
+    """
+    url = url.strip()
+    if "://" not in url:
+        url = "https://" + url.lstrip("/")
+    return url
+
 
 def assert_public_url(url: str) -> None:
     """Basic SSRF guard: only http(s), and reject private/internal addresses.
@@ -162,13 +162,12 @@ def get_box(page, selector: str):
     )
 
 
-def number_and_locate(page, violations: list) -> None:
+def number_and_locate(page, violations: list, node_counter: list[int]) -> None:
     """Give every failing element a sequential id and its page coordinates."""
-    n = 0
     for v in violations:
         for node in v["nodes"]:
-            n += 1
-            node["id"] = n
+            node_counter[0] += 1
+            node["id"] = node_counter[0]
             target = node["target"]
             # Multi-part targets (iframes / shadow DOM) are skipped for now.
             if target and len(target) == 1 and isinstance(target[0], str):
@@ -237,8 +236,15 @@ def take_screenshots(page, viewport_name: str, out_dir: str, violations: list) -
 
 
 def scan_page(
-    browser, url: str, viewport_name: str, out_dir: str, screenshots: bool
+    browser,
+    url: str,
+    viewport_name: str,
+    out_dir: str,
+    screenshots: bool,
+    node_counter: list[int] | None = None,
 ) -> dict:
+    if node_counter is None:
+        node_counter = [0]
     context = browser.new_context(viewport=VIEWPORTS[viewport_name])
     page = context.new_page()
     try:
@@ -256,7 +262,7 @@ def scan_page(
         ).response
 
         violations = [simplify_violation(v) for v in results["violations"]]
-        number_and_locate(page, violations)
+        number_and_locate(page, violations, node_counter)
 
         shots = None
         if screenshots:
@@ -275,22 +281,101 @@ def scan_page(
     finally:
         context.close()
 
+
+def wcag_info(tags: list[str]) -> dict:
+    """Pull WCAG success criteria ("wcag143" -> "1.4.3") and level out of axe tags."""
+    criteria = []
+    for tag in tags or []:
+        m = re.fullmatch(r"wcag(\d)(\d)(\d+)", tag)
+        if m:
+            criteria.append(".".join(m.groups()))
+    levels = {t for t in tags or [] if re.fullmatch(r"wcag2\d?a+", t)}
+    level = "AA" if any(t.endswith("aa") for t in levels) else ("A" if levels else None)
+    return {"wcag": criteria, "wcag_level": level}
+
+
+def formatReport(report: dict) -> dict:
+    """Convert the scanner report into a concise, user-facing response."""
+    readable_results = []
+    violation_types = set()  # unique rules, so desktop + mobile aren't double counted
+    affected_element_count = 0
+    manual_review_types = set()
+
+    for result in report["results"]:
+        issues = []
+        for violation in result.get("violations", []):
+            affected_elements = [
+                {
+                    "id": node.get("id"),  # matches the number drawn on the screenshot
+                    "target": node.get("target"),
+                    "html": node.get("html"),
+                    "suggested_fix": node.get("fix"),
+                }
+                for node in violation.get("nodes", [])
+            ]
+            affected_element_count += len(affected_elements)
+            violation_types.add(violation.get("id"))
+            issues.append(
+                {
+                    "rule": violation.get("id"),
+                    "severity": (violation.get("impact") or "unknown").title(),
+                    "title": violation.get("help"),
+                    "description": violation.get("description"),
+                    "affected_elements": affected_elements,
+                    "learn_more": violation.get("help_url"),
+                    **wcag_info(violation.get("tags")),
+                }
+            )
+
+        manual_review = [
+            {
+                "rule": item.get("id"),
+                "title": item.get("help"),
+                "description": item.get("description"),
+                "learn_more": item.get("help_url"),
+                **wcag_info(item.get("tags")),
+            }
+            for item in result.get("needs_review", [])
+        ]
+        manual_review_types.update(item["rule"] for item in manual_review)
+        readable_results.append(
+            {
+                "viewport": result.get("viewport"),
+                "final_url": result.get("final_url"),
+                "http_status": result.get("http_status"),
+                "screenshots": result.get("screenshots"),
+                "passes_count": result.get("passes_count", 0),
+                "issue_count": len(issues),
+                "issues": issues,
+                "manual_review": manual_review,
+            }
+        )
+
+    return {
+        "url": report.get("url"),
+        "scanned_at": report.get("scanned_at"),
+        "standard": report.get("standard"),
+        "disclaimer": report.get("disclaimer"),
+        "summary": {
+            "viewport_count": len(readable_results),
+            "violation_type_count": len(violation_types),
+            "affected_element_count": affected_element_count,
+            "manual_review_count": len(manual_review_types),
+        },
+        "results": readable_results,
+    }
+
+
 @app.post("/scanner")
 def scan(url: str) -> dict:
     """Scan a URL and return the report directly as an API response."""
+    url = normalize_url(url)
     try:
         assert_public_url(url)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
-    # A new folder per scan, so screenshots never overwrite each other
-    # and the browser never shows a cached image from an older scan.
-    scan_id = uuid.uuid4().hex[:12]
-    out_dir = os.path.join(OUTPUT_DIR, scan_id)
-    os.makedirs(out_dir, exist_ok=True)
-
     report = {
-        "scan_id": scan_id,
         "url": url,
         "scanned_at": datetime.now(timezone.utc).isoformat(),
         "standard": "WCAG 2.2 A/AA (automated rules only)",
@@ -299,16 +384,18 @@ def scan(url: str) -> dict:
             "of ADA compliance."
         ),
         "results": [],
-        "manual_checks_required": MANUAL_CHECKS,
     }
 
     try:
         with sync_playwright() as p:
             browser = p.chromium.launch()
+            node_counter = [0]
             try:
                 for name in VIEWPORTS:
                     print(f"Scanning {url} ({name})...")
-                    report["results"].append(scan_page(browser, url, name, out_dir, True))
+                    report["results"].append(
+                        scan_page(browser, url, name, OUTPUT_DIR, True, node_counter)
+                    )
             finally:
                 browser.close()
     except ValueError as exc:  # e.g. the site redirected to a private address
@@ -321,9 +408,9 @@ def scan(url: str) -> dict:
         shots = r.get("screenshots")
         if shots:
             for key in ("clean", "highlighted"):
-                shots[key] = f"/{OUTPUT_DIR}/{scan_id}/{shots[key]}"
+                shots[key] = f"/{OUTPUT_DIR}/{shots[key]}"
 
-    return report
+    return formatReport(report)
 
 
 app.include_router(chat_router)  # POST /api/chat
@@ -338,6 +425,7 @@ def main() -> int:
     parser.add_argument("--out-dir", default="scan-output")
     parser.add_argument("--no-screenshots", action="store_true")
     args = parser.parse_args()
+    args.url = normalize_url(args.url)
 
     try:
         assert_public_url(args.url)
@@ -356,17 +444,22 @@ def main() -> int:
             "of ADA compliance."
         ),
         "results": [],
-        "manual_checks_required": MANUAL_CHECKS,
     }
 
     with sync_playwright() as p:
         browser = p.chromium.launch()
+        node_counter = [0]
         try:
             for name in VIEWPORTS:
                 print(f"Scanning {args.url} ({name})...")
                 report["results"].append(
                     scan_page(
-                        browser, args.url, name, args.out_dir, not args.no_screenshots
+                        browser,
+                        args.url,
+                        name,
+                        args.out_dir,
+                        not args.no_screenshots,
+                        node_counter,
                     )
                 )
         finally:
