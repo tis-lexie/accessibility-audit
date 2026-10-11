@@ -2,6 +2,7 @@ import { useState } from "react";
 import "./App.css";
 import ScreenshotViewer from "./screenshotViewer";
 import { API_URL } from "./config";
+import ChatPanel from "./ChatPanel";
 
 function formatIssues(report) {
   if (typeof report === "string") return report;
@@ -92,6 +93,7 @@ function App() {
   const [input, setInput] = useState("");
   const [images, setImages] = useState([]);
   const [issues, setIssues] = useState("Issues will go here");
+  const [report, setReport] = useState(null);
 
   async function handleClick() {
     if (!input.trim()) return; // catches empty strings
@@ -99,6 +101,7 @@ function App() {
     const scanId = Date.now();
     setLoading(true);
     setImages([]);
+    setReport(null);
     setIssues("Issues will go here");
     try {
       const res = await fetch(
@@ -114,6 +117,7 @@ function App() {
       }
 
       setIssues(data);
+      setReport(data);
       console.log(data);
       setImages(
         data.results.flatMap((scan, index) => [
@@ -126,6 +130,7 @@ function App() {
         ]),
       );
     } catch (error) {
+      setReport(null);
       setIssues({ error: error.message });
     } finally {
       setLoading(false);
@@ -194,6 +199,7 @@ function App() {
             </pre>
           </div>
         </div>
+        <ChatPanel report = {report} />
       </div>
     </div>
   );
