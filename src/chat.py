@@ -87,22 +87,41 @@ def summarize_report(report: dict) -> str:
 
     count = 0
     for r in report.get("results", []):
-        lines.append(f"\n## Viewport: {r['viewport']} ({len(r['violations'])} rule types failed)")
-        for v in r["violations"]:
-            for node in v["nodes"]:
+        violations = r.get("violations") or r.get("issues", [])
+        lines.append(f"\n## Viewport: {r['viewport']} ({len(violations)} rule types failed)")
+        for v in violations:
+            nodes = v.get("nodes")
+            elements = nodes if nodes is not None else v.get("affected_elements", [])
+            for element in elements:
                 count += 1
                 if count > MAX_ISSUES:
                     continue
+                is_raw = nodes is not None
+                if is_raw:
+                    issue_id = v.get("id", "?")
+                    impact = v.get("impact", "unknown")
+                    title = v.get("help", "")
+                    target = element.get("target")
+                    html = element.get("html") or ""
+                    fix = element.get("fix") or ""
+                else:
+                    issue_id = v.get("rule", "?")
+                    impact = v.get("severity", "unknown")
+                    title = v.get("title", "")
+                    target = element.get("target")
+                    html = element.get("html") or ""
+                    fix = element.get("suggested_fix") or ""
                 lines.append(
-                    f"#{node.get('id', '?')} [{v['impact']}] {v['id']}: {v['help']}\n"
-                    f"   element: {node['target']}\n"
-                    f"   html: {node['html'][:300]}\n"
-                    f"   axe says: {(node.get('fix') or '').strip()[:300]}"
+                    f"#{count} [{impact}] {issue_id}: {title}\n"
+                    f"   element: {target}\n"
+                    f"   html: {html[:300]}\n"
+                    f"   axe says: {fix.strip()[:300]}"
                 )
-                if node.get("explanation"):
-                    lines.append(f"   explanation: {node['explanation']}")
         if r.get("needs_review"):
             names = ", ".join(v["id"] for v in r["needs_review"])
+            lines.append(f"Needs manual review (axe was unsure): {names}")
+        if r.get("manual_review"):
+            names = ", ".join(v.get("rule", "?") for v in r["manual_review"])
             lines.append(f"Needs manual review (axe was unsure): {names}")
 
     if count > MAX_ISSUES:

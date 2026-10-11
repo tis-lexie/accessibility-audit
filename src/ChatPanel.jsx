@@ -17,9 +17,6 @@ export default function ChatPanel({ report }) {
   const [error, setError] = useState(null)
   const endRef = useRef(null)
 
-  useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages, loading])
 
   // Start a fresh conversation when a new scan comes in.
   useEffect(() => {
