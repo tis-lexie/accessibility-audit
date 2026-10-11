@@ -17,7 +17,12 @@ function ScreenshotViewer({ images = [] }) {
     <div>
       <div className="image-tabs" role="group" aria-label="Screenshot view">
         {images.map((img, i) => (
-          <button key={img.id} aria-pressed={i === selected} onClick={() => setSelected(i)}>
+          <button 
+            key={img.id} 
+            className = {`image-tab${i === selected ? " selected" : ""}`}
+            aria-pressed={i === selected} 
+            onClick={() => setSelected(i)}
+          >
             {img.label}
           </button>
         ))}

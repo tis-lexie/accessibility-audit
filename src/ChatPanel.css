@@ -48,7 +48,7 @@
 
 .msg.assistant {
   align-self: flex-start;
-  background: var(--code-bg);
+  background: #fbf3df;
   color: var(--text-h);
 }
 
