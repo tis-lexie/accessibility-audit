@@ -14,6 +14,7 @@ import argparse
 import ipaddress
 import json
 import os
+import re
 import shutil
 import socket
 import sys
@@ -281,18 +282,31 @@ def scan_page(
         context.close()
 
 
+def wcag_info(tags: list[str]) -> dict:
+    """Pull WCAG success criteria ("wcag143" -> "1.4.3") and level out of axe tags."""
+    criteria = []
+    for tag in tags or []:
+        m = re.fullmatch(r"wcag(\d)(\d)(\d+)", tag)
+        if m:
+            criteria.append(".".join(m.groups()))
+    levels = {t for t in tags or [] if re.fullmatch(r"wcag2\d?a+", t)}
+    level = "AA" if any(t.endswith("aa") for t in levels) else ("A" if levels else None)
+    return {"wcag": criteria, "wcag_level": level}
+
+
 def formatReport(report: dict) -> dict:
     """Convert the scanner report into a concise, user-facing response."""
     readable_results = []
-    violation_type_count = 0
+    violation_types = set()  # unique rules, so desktop + mobile aren't double counted
     affected_element_count = 0
-    manual_review_count = 0
+    manual_review_types = set()
 
     for result in report["results"]:
         issues = []
         for violation in result.get("violations", []):
             affected_elements = [
                 {
+                    "id": node.get("id"),  # matches the number drawn on the screenshot
                     "target": node.get("target"),
                     "html": node.get("html"),
                     "suggested_fix": node.get("fix"),
@@ -300,7 +314,7 @@ def formatReport(report: dict) -> dict:
                 for node in violation.get("nodes", [])
             ]
             affected_element_count += len(affected_elements)
-            violation_type_count += 1
+            violation_types.add(violation.get("id"))
             issues.append(
                 {
                     "rule": violation.get("id"),
@@ -309,6 +323,7 @@ def formatReport(report: dict) -> dict:
                     "description": violation.get("description"),
                     "affected_elements": affected_elements,
                     "learn_more": violation.get("help_url"),
+                    **wcag_info(violation.get("tags")),
                 }
             )
 
@@ -318,10 +333,11 @@ def formatReport(report: dict) -> dict:
                 "title": item.get("help"),
                 "description": item.get("description"),
                 "learn_more": item.get("help_url"),
+                **wcag_info(item.get("tags")),
             }
             for item in result.get("needs_review", [])
         ]
-        manual_review_count += len(manual_review)
+        manual_review_types.update(item["rule"] for item in manual_review)
         readable_results.append(
             {
                 "viewport": result.get("viewport"),
@@ -342,9 +358,9 @@ def formatReport(report: dict) -> dict:
         "disclaimer": report.get("disclaimer"),
         "summary": {
             "viewport_count": len(readable_results),
-            "violation_type_count": violation_type_count,
+            "violation_type_count": len(violation_types),
             "affected_element_count": affected_element_count,
-            "manual_review_count": manual_review_count,
+            "manual_review_count": len(manual_review_types),
         },
         "results": readable_results,
     }

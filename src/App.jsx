@@ -1,114 +1,89 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "./App.css";
 import ScreenshotViewer from "./screenshotViewer";
+import ScanResults from "./ScanResults";
 import { API_URL } from "./config";
 import ChatPanel from "./ChatPanel";
 
-function formatIssues(report) {
-  if (typeof report === "string") return report;
-  if (report?.error) return `Error: ${report.error}`;
-  if (!report?.results) return "Issues will go here";
+const RECENT_KEY = "recent-scans";
+const MAX_RECENT = 5;
 
-  const lines = [
-    `Scan: ${report.url}`,
-    "",
-    "Summary",
-    `Viewports scanned: ${report.summary?.viewport_count ?? report.results.length}`,
-    `Issue types: ${report.summary?.violation_type_count ?? 0}`,
-    `Affected elements: ${report.summary?.affected_element_count ?? 0}`,
-    `Manual reviews: ${report.summary?.manual_review_count ?? 0}`,
-  ];
-  const seenIssueTypes = new Set();
-
-  for (const result of report.results) {
-    lines.push("", `${result.viewport} results`, "=".repeat(30));
-
-    const displayedIssues = result.issues.filter((issue) => {
-      const issueType = issue.rule || issue.title;
-      if (seenIssueTypes.has(issueType)) return false;
-      seenIssueTypes.add(issueType);
-      return true;
-    });
-
-    if (displayedIssues.length === 0) {
-      lines.push(
-        result.issues.length === 0
-          ? "No automated issues found."
-          : "Repeated issue types omitted.",
-      );
-    }
-
-    displayedIssues.forEach((issue, index) => {
-      lines.push(
-        "",
-        `  ${index + 1}. ${issue.title || issue.rule}`,
-        `     Severity: ${issue.severity}`,
-        `     Description: ${issue.description || "Not provided"}`,
-      );
-
-      const displayedTargets = new Set();
-      issue.affected_elements.forEach((element) => {
-        const rawTarget = Array.isArray(element.target)
-          ? element.target.join(", ")
-          : element.target || "Not identified";
-        const target = rawTarget
-          .replace(/#\\[0-9a-f]+(?:\s+[0-9a-f]+)?(?=\s*>)/gi, "")
-          .replace(/\s*>\s*\.installment\b/g, "")
-          .replace(/^\s*>\s*/, "")
-          .replace(/\s*>\s*>/g, " > ")
-          .trim();
-        if (displayedTargets.has(target)) return;
-        displayedTargets.add(target);
-        lines.push(
-          `     ${target}`,
-        );
-      });
-
-      const suggestedFix = issue.affected_elements.find(
-        (element) => element.suggested_fix,
-      )?.suggested_fix;
-      lines.push(`     Suggested fix: ${suggestedFix || "Not provided"}`);
-
-      if (issue.learn_more) lines.push(`     Learn more: ${issue.learn_more}`);
-      lines.push("");
-    });
-
-    if (result.manual_review.length > 0) {
-      lines.push("", "Needs manual review");
-      result.manual_review.forEach((item, index) => {
-        lines.push(
-          `  ${index + 1}. ${item.title || item.rule}`,
-          `     ${item.description || "Review this item manually."}`,
-          "",
-        );
-      });
-    }
+function loadRecent() {
+  try {
+    return JSON.parse(localStorage.getItem(RECENT_KEY)) || [];
+  } catch {
+    return [];
   }
+}
 
-  return lines.join("\n");
+function saveRecent(list) {
+  try {
+    localStorage.setItem(RECENT_KEY, JSON.stringify(list));
+  } catch {
+    // Storage can be blocked (private mode); recent scans are just a convenience.
+  }
+}
+
+function siteNameOf(url) {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return url;
+  }
+}
+
+function capitalize(text) {
+  return text ? text[0].toUpperCase() + text.slice(1) : text;
+}
+
+function downloadReport(report) {
+  const blob = new Blob([JSON.stringify(report, null, 2)], {
+    type: "application/json",
+  });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = `accessibility-report-${siteNameOf(report.url)}.json`;
+  link.click();
+  URL.revokeObjectURL(link.href);
 }
 
 function App() {
   const [loading, setLoading] = useState(false);
   const [input, setInput] = useState("");
-  const [images, setImages] = useState([]);
-  const [issues, setIssues] = useState("Issues will go here");
+  const [inputError, setInputError] = useState("");
+  const [scanError, setScanError] = useState("");
+  const [status, setStatus] = useState("");
   const [report, setReport] = useState(null);
+  const [scanId, setScanId] = useState(0);
+  const [viewport, setViewport] = useState(0);
+  const [recent, setRecent] = useState(loadRecent);
 
-  async function handleClick() {
-    if (!input.trim()) return; // catches empty strings
+  // Collapsed sections don't print, so open them all for printing.
+  useEffect(() => {
+    function openAllDetails() {
+      document.querySelectorAll("details").forEach((d) => (d.open = true));
+    }
+    window.addEventListener("beforeprint", openAllDetails);
+    return () => window.removeEventListener("beforeprint", openAllDetails);
+  }, []);
 
-    const scanId = Date.now();
+  async function runScan(url) {
+    const target = url.trim();
+    if (loading) return;
+    if (!target) {
+      setInputError("Enter a website address, for example google.com.");
+      return;
+    }
+
+    setInputError("");
+    setScanError("");
     setLoading(true);
-    setImages([]);
     setReport(null);
-    setIssues("Issues will go here");
+    setStatus(`Scanning ${target}. This can take up to a minute.`);
     try {
       const res = await fetch(
-        `${API_URL}/scanner?url=${encodeURIComponent(input.trim())}`,
-        {
-          method: "POST",
-        },
+        `${API_URL}/scanner?url=${encodeURIComponent(target)}`,
+        { method: "POST" },
       );
       const data = await res.json();
 
@@ -116,95 +91,230 @@ function App() {
         throw new Error(data.detail || "The scan could not be started.");
       }
 
-      setIssues(data);
+      const { violation_type_count = 0, manual_review_count = 0 } =
+        data.summary ?? {};
       setReport(data);
-      console.log(data);
-      setImages(
-        data.results.flatMap((scan, index) => [
-          {
-            id: `${index}`,
-            url: `${API_URL}${scan.screenshots.highlighted}?v=${scanId}`,
-            label: `${scan.viewport}`,
-            alt: `${scan.viewport} highlighted screenshot`,
-          },
-        ]),
+      setScanId(Date.now());
+      setViewport(0);
+      setStatus(
+        `Scan of ${siteNameOf(data.url)} complete. ${violation_type_count} ${violation_type_count === 1 ? "issue type" : "issue types"} found, ${manual_review_count} ${manual_review_count === 1 ? "item needs" : "items need"} manual review.`,
       );
+
+      const next = [data.url, ...recent.filter((u) => u !== data.url)].slice(
+        0,
+        MAX_RECENT,
+      );
+      setRecent(next);
+      saveRecent(next);
     } catch (error) {
-      setReport(null);
-      setIssues({ error: error.message });
+      const message =
+        error instanceof TypeError
+          ? "Couldn't reach the scanner. Check that the backend server is running."
+          : error.message;
+      setScanError(message);
+      setStatus("");
     } finally {
       setLoading(false);
     }
   }
 
+  const result = report?.results[viewport];
+  const siteName = report ? siteNameOf(report.url) : "";
+
   return (
     <div className="root">
-      <div className="main-container">
-        <div className="top-bar">
-          <h3> Accessibility Audit</h3>
+      <a className="skip-link" href="#main">
+        Skip to main content
+      </a>
+      <header className="top-bar">
+        <p className="site-name">Accessibility Audit</p>
+        <a
+          href="https://github.com/tis-lexie/accessibility-audit"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="logo-link"
+        >
+          <img
+            src="/GitHub_Invertocat_Black.png"
+            alt="View the project on GitHub (opens in a new tab)"
+            className="logo"
+          />
+        </a>
+      </header>
 
-          <a
-            href="https://github.com/tis-lexie/accessibility-audit"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="logo-link"
-          >
-            <img
-              src="/GitHub_Invertocat_Black.png"
-              alt="View the project on GitHub"
-              className="logo"
-            />
-          </a>
-        </div>
+      <main id="main" className="main-container">
         <div className="top-wrapper">
           <div className="catch-phrase">
             <h1>Audit That Website.</h1>
+            {/* Decorative, so empty alt keeps screen readers from announcing it. */}
+            <img
+              className="hero-graphic"
+              src="/hero-graphic.svg"
+              alt=""
+              width="480"
+              height="320"
+            />
           </div>
-          <div className="url-container">
-            <h2>Paste Your URL Here</h2>
+          <section className="url-container" aria-labelledby="scan-heading">
+            <h2 id="scan-heading">Paste Your URL Here</h2>
             <p className="desc-text">
-              Copy and paste any website into the text-box below to see if it is
-              accessible.
+              Enter any website below to check it for accessibility problems.
             </p>
-            <div className="input-wrapper">
-              <input
-                id="url"
-                type="text"
-                inputMode="url"
-                autoCapitalize="none"
-                autoCorrect="off"
-                spellCheck={false}
-                value={input}
-                onChange={(event) => setInput(event.target.value)}
-                placeholder="Enter Website URL here, ex: google.com"
-              />
-              <button
-                onClick={handleClick}
-                id="button1"
-                type="button"
-                disabled={loading}
-              >
-                {loading ? "Scanning..." : "Submit URL"}
-              </button>
-            </div>
-          </div>
+            <form
+              className="input-wrapper"
+              noValidate
+              onSubmit={(event) => {
+                event.preventDefault();
+                runScan(input);
+              }}
+            >
+              <label htmlFor="url">Website address</label>
+              <p id="url-hint" className="hint">
+                You can leave off https:// and www.
+              </p>
+              <div className="input-row">
+                <input
+                  id="url"
+                  type="text"
+                  inputMode="url"
+                  autoComplete="url"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  value={input}
+                  onChange={(event) => setInput(event.target.value)}
+                  placeholder="google.com"
+                  aria-invalid={inputError ? true : undefined}
+                  aria-describedby={
+                    inputError ? "url-hint url-error" : "url-hint"
+                  }
+                />
+                {/* aria-disabled instead of disabled so focus isn't lost mid-scan. */}
+                <button
+                  id="button1"
+                  className="button-primary"
+                  type="submit"
+                  aria-disabled={loading}
+                >
+                  {loading && <span className="spinner" aria-hidden="true" />}
+                  {loading ? "Scanning…" : "Scan website"}
+                </button>
+              </div>
+              {inputError && (
+                <p id="url-error" className="field-error">
+                  {inputError}
+                </p>
+              )}
+            </form>
+
+            {recent.length > 0 && (
+              <div className="recent">
+                <h3 id="recent-heading">Recent scans</h3>
+                <ul aria-labelledby="recent-heading">
+                  {recent.map((url) => (
+                    <li key={url}>
+                      <button
+                        type="button"
+                        className="chip"
+                        onClick={() => {
+                          setInput(url);
+                          runScan(url);
+                        }}
+                      >
+                        <span className="visually-hidden">Scan again: </span>
+                        {siteNameOf(url)}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </section>
         </div>
 
-        <div className="output-section">
-          <div className="text-image-wrapper">
-            <h1>Your Output Here.</h1>
-            <ScreenshotViewer images={images} />
-          </div>
-          <div className="problems-text">
-            <h2>List of Problems</h2>
-            <label htmlFor="problem-output"></label>
-            <pre id="problem-output">
-              {formatIssues(issues)}
-            </pre>
-          </div>
+        <div className="status" role="status">
+          {status}
         </div>
-        <ChatPanel report = {report} />
-      </div>
+        {scanError && (
+          <div className="scan-error" role="alert">
+            <strong>The scan didn't finish.</strong> {scanError}
+          </div>
+        )}
+
+        <section className="output-section" aria-labelledby="results-heading">
+          <div className="results-bar">
+            <h2 id="results-heading">
+              {report ? `Results for ${siteName}` : "Your Results"}
+            </h2>
+            {report && (
+              <>
+                <div
+                  className="toggle-group"
+                  role="group"
+                  aria-label="Screen size"
+                >
+                  {report.results.map((r, i) => (
+                    <button
+                      key={r.viewport}
+                      type="button"
+                      className="toggle"
+                      aria-pressed={i === viewport}
+                      onClick={() => setViewport(i)}
+                    >
+                      {capitalize(r.viewport)}
+                    </button>
+                  ))}
+                </div>
+                <div className="report-actions">
+                  <button
+                    type="button"
+                    className="button-secondary"
+                    onClick={() => downloadReport(report)}
+                  >
+                    Download JSON
+                  </button>
+                  <button
+                    type="button"
+                    className="button-secondary"
+                    onClick={() => window.print()}
+                  >
+                    Print or save PDF
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+          {report?.disclaimer && <p className="note">{report.disclaimer}</p>}
+
+          <div className="output-columns">
+            <div className="output-column">
+              <ScreenshotViewer
+                result={result}
+                siteName={siteName}
+                cacheKey={scanId}
+              />
+            </div>
+            <div className="output-column">
+              <div className="column-header">
+                <h3>
+                  List of Problems
+                  {result && (
+                    <span className="visually-hidden">
+                      {" "}
+                      ({result.viewport})
+                    </span>
+                  )}
+                </h3>
+              </div>
+              <div className="problems-text">
+                <ScanResults result={result} />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <ChatPanel report={report} viewport={result?.viewport} />
+      </main>
     </div>
   );
 }
