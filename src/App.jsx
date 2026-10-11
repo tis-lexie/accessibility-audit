@@ -149,7 +149,7 @@ function App() {
             {/* Decorative, so empty alt keeps screen readers from announcing it. */}
             <img
               className="hero-graphic"
-              src="/hero-graphic.svg"
+              src="/accessilenny.svg"
               alt=""
               width="480"
               height="320"
