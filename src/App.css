@@ -15,7 +15,7 @@
   margin-left: 10px;
 }
 .logo {
-  max-height: 20px;
+  max-height: 40px;
   display: flex;
   justify-content: right;
   align-items: right;
@@ -69,17 +69,24 @@
   color: #000;
   margin-bottom: 5px;
   height: 30px;
+  border: 1px solid #8a7f6a;
+  box-sizing: border-box;
+  background-image: none;
 }
 #url,
 #button1 {
-  padding: 8px;
+  padding: 10px;
   border-radius: 10px;
+  appearance: none;
+  -webkit-appearance: none;
+  box-shadow: none;
 }
 
 #button1 {
   background-color: var(--accent);
   margin-left: 10px;
   height: 46px;
+  border: 0;
 }
 
 .output-section {
