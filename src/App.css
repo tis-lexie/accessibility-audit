@@ -79,12 +79,16 @@
 
 .output-section{
   display: flex;
+  align-items: stretch;
   justify-content: space-between;
-  margin-left: 10%;
+  margin-left: 40px;
 }
 .problems-text{
   display: flex;
+  flex: 1 1 30%;
+  align-self: stretch;
   min-width: 30%;
+  max-width: 30%;
   flex-direction: column;
   align-items: center;
   padding: 10px;
@@ -94,24 +98,38 @@
 }
 
 #problem-output{
+  flex: 1 1 auto;
+  width: 100%;
+  box-sizing: border-box;
   background-color: transparent;
   border-color: transparent;
   resize: none;
+  min-height: 200px;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  text-align: left;
+  line-height: 1.5;
+  color: #fff;
+  font-size: 14px;
 }
 #problem-output:focus {
   outline: none;
 }
 .image-area {
   width: 100%;
-  max-width: 800px;
+  max-width: 700px;
   min-height: 300px;
+  max-height: 2000px;
   margin: 24px auto;
   
-  border-radius: 20px;
+  border-radius: 0px;
   padding: 10px;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
+  overflow-y: auto;
+  overflow-x: auto;
 }
 
 .image-area img {
