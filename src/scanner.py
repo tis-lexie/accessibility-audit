@@ -57,6 +57,18 @@ VIEWPORTS = {
 OUTPUT_DIR = "scan-output"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
+def normalize_url(url: str) -> str:
+    """Accept bare input like "example.com" or "www.example.com/page".
+
+    Adds https:// when no scheme is given. "www." is left to the site: most
+    domains redirect between the bare and www forms on their own.
+    """
+    url = url.strip()
+    if "://" not in url:
+        url = "https://" + url.lstrip("/")
+    return url
+
+
 def assert_public_url(url: str) -> None:
     """Basic SSRF guard: only http(s), and reject private/internal addresses.
 
@@ -341,6 +353,7 @@ def formatReport(report: dict) -> dict:
 @app.post("/scanner")
 def scan(url: str) -> dict:
     """Scan a URL and return the report directly as an API response."""
+    url = normalize_url(url)
     try:
         assert_public_url(url)
     except ValueError as exc:
@@ -396,6 +409,7 @@ def main() -> int:
     parser.add_argument("--out-dir", default="scan-output")
     parser.add_argument("--no-screenshots", action="store_true")
     args = parser.parse_args()
+    args.url = normalize_url(args.url)
 
     try:
         assert_public_url(args.url)

@@ -169,10 +169,14 @@ function App() {
             <div className="input-wrapper">
               <input
                 id="url"
-                type="url"
+                type="text"
+                inputMode="url"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
                 value={input}
                 onChange={(event) => setInput(event.target.value)}
-                placeholder="Enter Website URL here, ex: https://www.google.com"
+                placeholder="Enter Website URL here, ex: google.com"
               />
               <button
                 onClick={handleClick}
